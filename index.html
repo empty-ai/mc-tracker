@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Resource Tracker Pro</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --glass-bg: rgba(30, 30, 30, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-main: #ffffff;
+      --text-muted: #a0a0a0;
+      --accent-color: #4CAF50;
+      --accent-hover: #45a049;
+      --accent-soft: rgba(76, 175, 80, 0.15);
+      --danger-color: #f44336;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --transition: 0.2s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-color);
+      background-image: 
+        radial-gradient(circle at 15% 30%, rgba(76, 175, 80, 0.14), transparent 35%),
+        radial-gradient(circle at 85% 70%, rgba(33, 150, 243, 0.14), transparent 35%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      margin: 0 0 6px 0;
+      font-size: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    /* SEARCH BLOCK */
+    .search-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+      z-index: 50;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      font-size: 16px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 16px rgba(76, 175, 80, 0.35);
+    }
+
+    /* CATEGORY TAGS */
+    .filter-tags {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(20, 20, 20, 0.8);
+    }
+
+    .tag-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all var(--transition);
+    }
+
+    .tag-btn.active, .tag-btn:hover {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: rgba(24, 24, 24, 0.95);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      max-height: 360px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.65);
+    }
+
+    .dropdown.active {
+      display: block;
+    }
+
+    .dropdown-items-container {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background var(--transition);
+    }
+
+    .dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .item-icon {
+      width: 34px;
+      height: 34px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .item-details {
+      flex-grow: 1;
+    }
+
+    .item-name {
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    .item-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .add-btn {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background var(--transition);
+    }
+
+    .add-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    /* SECTIONS */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 26px 0 14px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .text-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 6px;
+      transition: color var(--transition);
+    }
+
+    .text-btn:hover {
+      color: var(--danger-color);
+    }
+
+    .mode-switch-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .mode-switch-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 20px;
+      color: var(--text-muted);
+      background: var(--glass-bg);
+      border: 1px dashed var(--glass-border);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+    }
+
+    /* TASK CARD */
+    .task-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: opacity var(--transition), border-color var(--transition);
+      overflow: hidden;
+    }
+
+    .task-card.inactive {
+      opacity: 0.45;
+    }
+
+    .task-content {
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .task-info h3 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+    }
+
+    .task-recipe-preview {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .tree-toggle-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all var(--transition);
+    }
+
+    .tree-toggle-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .task-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .qty-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      padding: 4px 10px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: background var(--transition);
+    }
+
+    .qty-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .qty-input {
+      width: 48px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: bold;
+      outline: none;
+      -moz-appearance: textfield;
+    }
+
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: color var(--transition);
+    }
+
+    .delete-btn:hover {
+      color: var(--danger-color);
+    }
+
+    /* CUSTOM TOGGLE SWITCH */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255,255,255,0.12);
+      transition: .3s;
+      border-radius: 34px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    /* TREE CRAFT ACCORDION */
+    .task-tree-view {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.25);
+      padding: 12px 18px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .task-tree-view.expanded {
+      display: block;
+    }
+
+    .tree-node {
+      margin: 3px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tree-branch {
+      color: rgba(255, 255, 255, 0.25);
+      font-family: monospace;
+    }
+
+    .tree-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+    }
+
+    /* SUMMARY TOTALS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .summary-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .summary-card .mat-name {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .summary-card .mat-stacks {
+      font-size: 13px;
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+
+    .summary-card .mat-raw {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <h1>Minecraft Resource Tracker</h1>
+      <p>Древовидный расчёт базовых материалов, крафтов и стаков (64 шт.)</p>
+    </header>
+    
+    <!-- SEARCH BLOCK -->
+    <div class="search-wrapper">
+      <input type="text" id="searchInput" class="search-input" placeholder="Поиск предмета... (нажмите, чтобы открыть весь список)" autocomplete="off">
+      
+      <div id="dropdownList" class="dropdown">
+        <div class="filter-tags" id="categoryFilters">
+          <button class="tag-btn active" data-cat="all">Все</button>
+          <button class="tag-btn" data-cat="redstone">Механизмы</button>
+          <button class="tag-btn" data-cat="transport">Транспорт</button>
+          <button class="tag-btn" data-cat="equipment">Снаряжение</button>
+          <button class="tag-btn" data-cat="blocks">Блоки и утварь</button>
+        </div>
+        <div class="dropdown-items-container" id="dropdownItemsContainer"></div>
+      </div>
+    </div>
+
+    <!-- TASKS LIST -->
+    <div class="section-header">
+      <h2>План крафта (Задачи)</h2>
+      <div class="header-actions">
+        <span id="taskCount" style="color: var(--text-muted); font-size: 13px;">0 задач</span>
+        <button class="text-btn" id="clearAllBtn" title="Очистить все задачи">Очистить всё</button>
+      </div>
+    </div>
+    <div id="taskList"></div>
+
+    <!-- TOTAL SUMMARY -->
+    <div class="section-header">
+      <h2>Итоговые ресурсы</h2>
+      <button class="mode-switch-btn" id="toggleModeBtn" title="Переключить детализацию материалов">
+        Режим: Сырые материалы (Брёвна/Слитки)
+      </button>
+    </div>
+    <div id="summaryContainer"></div>
+  </div>
+
+  <script>
+    /* ========================================================
+       1. БАЗА ДАННЫХ ПРЕДМЕТОВ И ДРЕВОВИДНЫХ КРАФТОВ
+       ======================================================== */
+    const DB = {
+      // БАЗОВОЕ СЫРЬЕ (Не имеет рецепта, добывается напрямую)
+      "log": { name: "Бревно (Сырая древесина)", icon: "🪵", category: "raw" },
+      "cobblestone": { name: "Булыжник", icon: "🪨", category: "raw" },
+      "iron_ingot": { name: "Железный слиток", icon: "🥈", category: "raw" },
+      "gold_ingot": { name: "Золотой слиток", icon: "🥇", category: "raw" },
+      "copper_ingot": { name: "Медный слиток", icon: "🟫", category: "raw" },
+      "diamond": { name: "Алмаз", icon: "💎", category: "raw" },
+      "netherite_scrap": { name: "Незеритовый обломок", icon: "🧱", category: "raw" },
+      "redstone_dust": { name: "Редстоун", icon: "🔴", category: "raw" },
+      "quartz": { name: "Кварц Нижнего мира", icon: "◽", category: "raw" },
+      "slime_ball": { name: "Сгусток слизи", icon: "🟢", category: "raw" },
+      "string": { name: "Нить", icon: "🕸️", category: "raw" },
+      "flint": { name: "Кремень", icon: "⚫", category: "raw" },
+      "feather": { name: "Перо", icon: "🪶", category: "raw" },
+      "leather": { name: "Кожа", icon: "🟤", category: "raw" },
+      "coal": { name: "Уголь", icon: "⬛", category: "raw" },
+      "blaze_rod": { name: "Огненный стержень", icon: "🔥", category: "raw" },
+      "ender_pearl": { name: "Жемчуг Эндера", icon: "🔮", category: "raw" },
+      "obsidian": { name: "Обсидиан", icon: "⬛", category: "raw" },
+      "nether_star": { name: "Звезда Незера", icon: "⭐", category: "raw" },
+      "glass": { name: "Стекло", icon: "🪟", category: "raw" },
+      "sand": { name: "Песок", icon: "🏖️", category: "raw" },
+      "gunpowder": { name: "Порох", icon: "🌫️", category: "raw" },
+      "sugar_cane": { name: "Сахарный тростник", icon: "🎋", category: "raw" },
+      "bamboo": { name: "Бамбук", icon: "🎍", category: "raw" },
+      "amethyst_shard": { name: "Осколок аметиста", icon: "🟣", category: "raw" },
+      "glowstone_dust": { name: "Светокаменная пыль", icon: "✨", category: "raw" },
+      "shulker_shell": { name: "Панцирь шалкера", icon: "🐚", category: "raw" },
+
+      // ПРОМЕЖУТОЧНЫЕ МАТЕРИАЛЫ
+      "planks": { 
+        name: "Доски", icon: "🪵", category: "blocks", yield: 4, 
+        recipe: [{ id: "log", amount: 1 }] 
+      },
+      "stick": { 
+        name: "Палка", icon: "🥢", category: "blocks", yield: 4, 
+        recipe: [{ id: "planks", amount: 2 }] 
+      },
+      "stone": { 
+        name: "Камень", icon: "🪨", category: "blocks", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 1 }] 
+      },
+      "smooth_stone": { 
+        name: "Гладкий камень", icon: "🔘", category: "blocks", yield: 1, 
+        recipe: [{ id: "stone", amount: 1 }] 
+      },
+      "stone_slab": { 
+        name: "Каменная плита", icon: "➖", category: "blocks", yield: 6, 
+        recipe: [{ id: "stone", amount: 3 }] 
+      },
+      "wooden_slab": { 
+        name: "Деревянная плита", icon: "🪵", category: "blocks", yield: 6, 
+        recipe: [{ id: "planks", amount: 3 }] 
+      },
+      "paper": { 
+        name: "Бумага", icon: "📜", category: "blocks", yield: 3, 
+        recipe: [{ id: "sugar_cane", amount: 3 }] 
+      },
+      "book": { 
+        name: "Книга", icon: "📖", category: "blocks", yield: 1, 
+        recipe: [{ id: "paper", amount: 3 }, { id: "leather", amount: 1 }] 
+      },
+      "redstone_torch": { 
+        name: "Красный факел", icon: "🕯️", category: "redstone", yield: 1, 
+        recipe: [{ id: "redstone_dust", amount: 1 }, { id: "stick", amount: 1 }] 
+      },
+      "iron_block": { 
+        name: "Железный блок", icon: "🧱", category: "blocks", yield: 1, 
+        recipe: [{ id: "iron_ingot", amount: 9 }] 
+      },
+      "iron_nugget": { 
+        name: "Кусочек железа", icon: "▫️", category: "blocks", yield: 9, 
+        recipe: [{ id: "iron_ingot", amount: 1 }] 
+      },
+      "bow": { 
+        name: "Лук", icon: "🏹", category: "equipment", yield: 1, 
+        recipe: [{ id: "stick", amount: 3 }, { id: "string", amount: 3 }] 
+      },
+      "tripwire_hook": { 
+        name: "Натяжной датчик", icon: "⚓", category: "redstone", yield: 2, 
+        recipe: [{ id: "iron_ingot", amount: 1 }, { id: "stick", amount: 1 }, { id: "planks", amount: 1 }] 
+      },
+
+      // МЕХАНИЗМЫ И РЕДСТОУН
+      "hopper": { 
+        name: "Воронка (Hopper)", icon: "📥", category: "redstone", yield: 1, 
+        recipe: [{ id: "iron_ingot", amount: 5 }, { id: "chest", amount: 1 }] 
+      },
+      "piston": { 
+        name: "Поршень (Piston)", icon: "⏹️", category: "redstone", yield: 1, 
+        recipe: [{ id: "planks", amount: 3 }, { id: "cobblestone", amount: 4 }, { id: "iron_ingot", amount: 1 }, { id: "redstone_dust", amount: 1 }] 
+      },
+      "sticky_piston": { 
+        name: "Липкий поршень (Sticky Piston)", icon: "🟩", category: "redstone", yield: 1, 
+        recipe: [{ id: "piston", amount: 1 }, { id: "slime_ball", amount: 1 }] 
+      },
+      "observer": { 
+        name: "Наблюдатель (Observer)", icon: "👁️", category: "redstone", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 6 }, { id: "redstone_dust", amount: 2 }, { id: "quartz", amount: 1 }] 
+      },
+      "repeater": { 
+        name: "Повторитель (Repeater)", icon: "🔁", category: "redstone", yield: 1, 
+        recipe: [{ id: "stone", amount: 3 }, { id: "redstone_torch", amount: 2 }, { id: "redstone_dust", amount: 1 }] 
+      },
+      "comparator": { 
+        name: "Компаратор (Comparator)", icon: "🎛️", category: "redstone", yield: 1, 
+        recipe: [{ id: "stone", amount: 3 }, { id: "redstone_torch", amount: 3 }, { id: "quartz", amount: 1 }] 
+      },
+      "dispenser": { 
+        name: "Раздатчик (Dispenser)", icon: "🏹", category: "redstone", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 7 }, { id: "bow", amount: 1 }, { id: "redstone_dust", amount: 1 }] 
+      },
+      "dropper": { 
+        name: "Выбрасыватель (Dropper)", icon: "🕳️", category: "redstone", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 7 }, { id: "redstone_dust", amount: 1 }] 
+      },
+      "target": { 
+        name: "Мишень (Target)", icon: "🎯", category: "redstone", yield: 1, 
+        recipe: [{ id: "redstone_dust", amount: 4 }, { id: "wheat", amount: 9 }] 
+      },
+      "crafter": { 
+        name: "Авто-верстак (Crafter 1.21)", icon: "⚙️", category: "redstone", yield: 1, 
+        recipe: [{ id: "iron_ingot", amount: 5 }, { id: "crafting_table", amount: 1 }, { id: "dropper", amount: 1 }, { id: "redstone_dust", amount: 2 }] 
+      },
+      "daylight_detector": { 
+        name: "Датчик дневного света", icon: "☀️", category: "redstone", yield: 1, 
+        recipe: [{ id: "glass", amount: 3 }, { id: "quartz", amount: 3 }, { id: "wooden_slab", amount: 3 }] 
+      },
+      "lever": { 
+        name: "Рычаг", icon: "🕹️", category: "redstone", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 1 }, { id: "stick", amount: 1 }] 
+      },
+      "tnt": { 
+        name: "Динамит (TNT)", icon: "🧨", category: "redstone", yield: 1, 
+        recipe: [{ id: "sand", amount: 4 }, { id: "gunpowder", amount: 5 }] 
+      },
+      "note_block": { 
+        name: "Нотный блок", icon: "🎵", category: "redstone", yield: 1, 
+        recipe: [{ id: "planks", amount: 8 }, { id: "redstone_dust", amount: 1 }] 
+      },
+
+      // ТРАНСПОРТ
+      "minecart": { 
+        name: "Вагонетка", icon: "🛒", category: "transport", yield: 1, 
+        recipe: [{ id: "iron_ingot", amount: 5 }] 
+      },
+      "chest_minecart": { 
+        name: "Вагонетка с сундуком", icon: "📦", category: "transport", yield: 1, 
+        recipe: [{ id: "minecart", amount: 1 }, { id: "chest", amount: 1 }] 
+      },
+      "hopper_minecart": { 
+        name: "Вагонетка с воронкой", icon: "📥", category: "transport", yield: 1, 
+        recipe: [{ id: "minecart", amount: 1 }, { id: "hopper", amount: 1 }] 
+      },
+      "tnt_minecart": { 
+        name: "Вагонетка с динамитом", icon: "🧨", category: "transport", yield: 1, 
+        recipe: [{ id: "minecart", amount: 1 }, { id: "tnt", amount: 1 }] 
+      },
+      "rail": { 
+        name: "Рельсы обычные (16 шт.)", icon: "🛤️", category: "transport", yield: 16, 
+        recipe: [{ id: "iron_ingot", amount: 6 }, { id: "stick", amount: 1 }] 
+      },
+      "powered_rail": { 
+        name: "Энергорельсы (6 шт.)", icon: "⚡", category: "transport", yield: 6, 
+        recipe: [{ id: "gold_ingot", amount: 6 }, { id: "stick", amount: 1 }, { id: "redstone_dust", amount: 1 }] 
+      },
+      "activator_rail": { 
+        name: "Активирующие рельсы (6 шт.)", icon: "💡", category: "transport", yield: 6, 
+        recipe: [{ id: "iron_ingot", amount: 6 }, { id: "stick", amount: 2 }, { id: "redstone_torch", amount: 1 }] 
+      },
+
+      // ХРАНИЛИЩА, БЛОКИ И УТВАРЬ
+      "chest": { 
+        name: "Сундук", icon: "📦", category: "blocks", yield: 1, 
+        recipe: [{ id: "planks", amount: 8 }] 
+      },
+      "barrel": { 
+        name: "Бочка", icon: "🛢️", category: "blocks", yield: 1, 
+        recipe: [{ id: "planks", amount: 6 }, { id: "wooden_slab", amount: 2 }] 
+      },
+      "shulker_box": { 
+        name: "Шалкеровый ящик", icon: "🔮", category: "blocks", yield: 1, 
+        recipe: [{ id: "chest", amount: 1 }, { id: "shulker_shell", amount: 2 }] 
+      },
+      "crafting_table": { 
+        name: "Верстак", icon: "🪚", category: "blocks", yield: 1, 
+        recipe: [{ id: "planks", amount: 4 }] 
+      },
+      "furnace": { 
+        name: "Печь", icon: "🔥", category: "blocks", yield: 1, 
+        recipe: [{ id: "cobblestone", amount: 8 }] 
+      },
+      "blast_furnace": { 
+        name: "Плавильная печь", icon: "🌋", category: "blocks", yield: 1, 
+        recipe: [{ id: "furnace", amount: 1 }, { id: "iron_ingot", amount: 5 }, { id: "smooth_stone", amount: 3 }] 
+      },
+      "anvil": { 
+        name: "Наковальня", icon: "🔨", category: "blocks", yield: 1, 
+        recipe: [{ id: "iron_block", amount: 3 }, { id: "iron_ingot", amount: 4 }] 
+      },
+      "enchanting_table": { 
+        name: "Стол зачаровывания", icon: "🔮", category: "blocks", yield: 1, 
+        recipe: [{ id: "book", amount: 1 }, { id: "diamond", amount: 2 }, { id: "obsidian", amount: 4 }] 
+      },
+      "bookshelf": { 
+        name: "Книжная полка", icon: "📚", category: "blocks", yield: 1, 
+        recipe: [{ id: "planks", amount: 6 }, { id: "book", amount: 3 }] 
+      },
+      "beacon": { 
+        name: "Маяк", icon: "✨", category: "blocks", yield: 1, 
+        recipe: [{ id: "glass", amount: 5 }, { id: "obsidian", amount: 3 }, { id: "nether_star", amount: 1 }] 
+      },
+      "scaffolding": { 
+        name: "Подмостки (6 шт.)", icon: "🪜", category: "blocks", yield: 6, 
+        recipe: [{ id: "bamboo", amount: 6 }, { id: "string", amount: 1 }] 
+      },
+      "torch": { 
+        name: "Факел (4 шт.)", icon: "🪵", category: "blocks", yield: 4, 
+        recipe: [{ id: "coal", amount: 1 }, { id: "stick", amount: 1 }] 
+      },
+      "lantern": { 
+        name: "Фонарь", icon: "🏮", category: "blocks", yield: 1, 
+        recipe: [{ id: "iron_nugget", amount: 8 }, { id: "torch", amount: 1 }] 
+      },
+
+      // СНАРЯЖЕНИЕ И ИНСТРУМЕНТЫ
+      "diamond_sword": { 
+        name: "Алмазный меч", icon: "🗡️", category: "equipment", yield: 1, 
+        recipe: [{ id: "diamond", amount: 2 }, { id: "stick", amount: 1 }] 
+      },
+      "diamond_pickaxe": { 
+        name: "Алмазная кирка", icon: "⛏️", category: "equipment", yield: 1, 
+        recipe: [{ id: "diamond", amount: 3 }, { id: "stick", amount: 2 }] 
+      },
+      "diamond_axe": { 
+        name: "Алмазный топор", icon: "🪓", category: "equipment", yield: 1, 
+        recipe: [{ id: "diamond", amount: 3 }, { id: "stick", amount: 2 }] 
+      },
+      "diamond_chestplate": { 
+        name: "Алмазный нагрудник", icon: "🦺", category: "equipment", yield: 1, 
+        recipe: [{ id: "diamond", amount: 8 }] 
+      },
+      "shield": { 
+        name: "Щит", icon: "🛡️", category: "equipment", yield: 1, 
+        recipe: [{ id: "planks", amount: 6 }, { id: "iron_ingot", amount: 1 }] 
+      },
+      "crossbow": { 
+        name: "Арбалет", icon: "🏹", category: "equipment", yield: 1, 
+        recipe: [{ id: "stick", amount: 3 }, { id: "string", amount: 2 }, { id: "iron_ingot", amount: 1 }, { id: "tripwire_hook", amount: 1 }] 
+      },
+      "arrow": { 
+        name: "Стрелы (4 шт.)", icon: "🏹", category: "equipment", yield: 4, 
+        recipe: [{ id: "flint", amount: 1 }, { id: "stick", amount: 1 }, { id: "feather", amount: 1 }] 
+      },
+      "netherite_ingot": { 
+        name: "Незеритовый слиток", icon: "🧱", category: "equipment", yield: 1, 
+        recipe: [{ id: "netherite_scrap", amount: 4 }, { id: "gold_ingot", amount: 4 }] 
+      }
+    };
+
+    /* ========================================================
+       2. СОСТОЯНИЕ ПРИЛОЖЕНИЯ И LOCALSTORAGE
+       ======================================================== */
+    const STORAGE_KEY = 'mc_resource_tracker_state_v2';
+    
+    let state = {
+      tasks: [],
+      rawMode: true, // true = сырые ресурсы (брёвна), false = прямые рецепты
+      activeCategory: 'all',
+      expandedTrees: {}
+    };
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state.tasks = parsed.tasks || [];
+          state.rawMode = parsed.rawMode !== undefined ? parsed.rawMode : true;
+          state.expandedTrees = parsed.expandedTrees || {};
+        } else {
+          // Дефолтные начальные задачи
+          state.tasks = [
+            { id: "hopper", qty: 4, active: true },
+            { id: "piston", qty: 12, active: true }
+          ];
+        }
+      } catch (e) {
+        console.error("Ошибка загрузки из LocalStorage:", e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          tasks: state.tasks,
+          rawMode: state.rawMode,
+          expandedTrees: state.expandedTrees
+        }));
+      } catch (e) {
+        console.error("Ошибка сохранения в LocalStorage:", e);
+      }
+    }
+
+    /* ========================================================
+       3. РЕКУРСИВНЫЙ РАСЧЕТ МАТЕРИАЛОВ И ДЕРЕВА КРАФТА
+       ======================================================== */
+    function getRecursiveRawMaterials(itemId, qtyNeeded) {
+      const item = DB[itemId];
+      if (!item || !item.recipe) {
+        return { [itemId]: qtyNeeded };
+      }
+
+      const yieldCount = item.yield || 1;
+      const craftsCount = Math.ceil(qtyNeeded / yieldCount);
+      const totals = {};
+
+      for (const ingredient of item.recipe) {
+        const subNeeded = ingredient.amount * craftsCount;
+        const subRaw = getRecursiveRawMaterials(ingredient.id, subNeeded);
+        for (const [rawId, count] of Object.entries(subRaw)) {
+          totals[rawId] = (totals[rawId] || 0) + count;
+        }
+      }
+      return totals;
+    }
+
+    function getDirectMaterials(itemId, qtyNeeded) {
+      const item = DB[itemId];
+      if (!item || !item.recipe) {
+        return { [itemId]: qtyNeeded };
+      }
+      const yieldCount = item.yield || 1;
+      const craftsCount = Math.ceil(qtyNeeded / yieldCount);
+      const totals = {};
+      for (const ingredient of item.recipe) {
+        totals[ingredient.id] = (totals[ingredient.id] || 0) + (ingredient.amount * craftsCount);
+      }
+      return totals;
+    }
+
+    function renderCraftTreeHTML(itemId, qtyNeeded, depth = 0) {
+      const item = DB[itemId];
+      if (!item) return '';
+
+      const yieldCount = item.yield || 1;
+      const craftsCount = Math.ceil(qtyNeeded / yieldCount);
+      const prefix = depth > 0 ? `${'&nbsp;'.repeat((depth - 1) * 4)}└─ ` : '';
+
+      let html = `
+        <div class="tree-node" style="padding-left: ${depth * 8}px;">
+          <span class="tree-branch">${prefix}</span>
+          <span>${item.icon}</span>
+          <span style="font-weight:${depth === 0 ? '600':'400'};">${item.name}</span>
+          <span class="tree-badge">${qtyNeeded} шт.</span>
+          ${item.recipe && depth > 0 ? `<span style="font-size:10px; color:var(--text-muted);">(${craftsCount} крафт.)</span>` : ''}
+        </div>
+      `;
+
+      if (item.recipe) {
+        for (const ing of item.recipe) {
+          const subNeeded = ing.amount * craftsCount;
+          html += renderCraftTreeHTML(ing.id, subNeeded, depth + 1);
+        }
+      }
+      return html;
+    }
+
+    function formatStacks(count) {
+      if (count < 64) return `${count} шт.`;
+      const stacks = Math.floor(count / 64);
+      const rem = count % 64;
+      return rem > 0 ? `${stacks} ст. + ${rem} шт.` : `${stacks} ст.`;
+    }
+
+    /* ========================================================
+       4. UI УПРАВЛЕНИЕ И ОБРАБОТЧИКИ СОБЫТИЙ
+       ======================================================== */
+    const searchInput = document.getElementById('searchInput');
+    const dropdownList = document.getElementById('dropdownList');
+    const dropdownItemsContainer = document.getElementById('dropdownItemsContainer');
+    const categoryFilters = document.getElementById('categoryFilters');
+    const taskList = document.getElementById('taskList');
+    const summaryContainer = document.getElementById('summaryContainer');
+    const taskCountEl = document.getElementById('taskCount');
+    const toggleModeBtn = document.getElementById('toggleModeBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+
+    function renderDropdownItems() {
+      const query = searchInput.value.toLowerCase().trim();
+      const cat = state.activeCategory;
+
+      const items = Object.entries(DB).filter(([id, item]) => {
+        if (cat !== 'all' && item.category !== cat) return false;
+        if (!query) return true;
+        return item.name.toLowerCase().includes(query) || id.toLowerCase().includes(query);
+      });
+
+      if (items.length === 0) {
+        dropdownItemsContainer.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-muted); font-size:13px;">Ничего не найдено</div>';
+        return;
+      }
+
+      dropdownItemsContainer.innerHTML = items.map(([id, item]) => {
+        const isRaw = !item.recipe;
+        const recipePreview = isRaw 
+          ? 'Добывается напрямую' 
+          : item.recipe.map(r => `${DB[r.id]?.name || r.id} (${r.amount})`).join(', ');
+
+        return `
+          <div class="dropdown-item" data-id="${id}">
+            <div class="item-icon">${item.icon}</div>
+            <div class="item-details">
+              <div class="item-name">${item.name}</div>
+              <div class="item-meta">${recipePreview}</div>
+            </div>
+            <button class="add-btn" type="button">Добавить</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    searchInput.addEventListener('focus', () => {
+      dropdownList.classList.add('active');
+      renderDropdownItems();
+    });
+
+    searchInput.addEventListener('input', () => {
+      dropdownList.classList.add('active');
+      renderDropdownItems();
+    });
+
+    categoryFilters.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tag-btn');
+      if (!btn) return;
+      categoryFilters.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.activeCategory = btn.getAttribute('data-cat');
+      renderDropdownItems();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!searchInput.contains(e.target) && !dropdownList.contains(e.target)) {
+        dropdownList.classList.remove('active');
+      }
+    });
+
+    dropdownItemsContainer.addEventListener('click', (e) => {
+      const itemEl = e.target.closest('.dropdown-item');
+      if (!itemEl) return;
+      const id = itemEl.getAttribute('data-id');
+      
+      const existing = state.tasks.find(t => t.id === id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        state.tasks.push({ id, qty: 1, active: true });
+      }
+      
+      saveState();
+      render();
+    });
+
+    window.updateQty = function(id, delta) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      task.qty = Math.max(1, task.qty + delta);
+      saveState();
+      render();
+    };
+
+    window.setQty = function(id, val) {
+      const task = state.tasks.find(t => t.id === id);
+      if (!task) return;
+      const num = parseInt(val, 10);
+      task.qty = isNaN(num) || num < 1 ? 1 : num;
+      saveState();
+      render();
+    };
+
+    window.toggleTask = function(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (task) {
+        task.active = !task.active;
+        saveState();
+        render();
+      }
+    };
+
+    window.deleteTask = function(id) {
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      delete state.expandedTrees[id];
+      saveState();
+      render();
+    };
+
+    window.toggleTree = function(id) {
+      state.expandedTrees[id] = !state.expandedTrees[id];
+      saveState();
+      render();
+    };
+
+    clearAllBtn.addEventListener('click', () => {
+      if (state.tasks.length === 0) return;
+      if (confirm('Вы уверены, что хотите удалить все задачи?')) {
+        state.tasks = [];
+        state.expandedTrees = {};
+        saveState();
+        render();
+      }
+    });
+
+    toggleModeBtn.addEventListener('click', () => {
+      state.rawMode = !state.rawMode;
+      toggleModeBtn.textContent = state.rawMode 
+        ? "Режим: Сырые материалы (Брёвна/Слитки)" 
+        : "Режим: Прямой рецепт (Доски/Палки)";
+      saveState();
+      render();
+    });
+
+    /* ========================================================
+       5. ОСНОВНОЙ РЕНДЕР ИНТЕРФЕЙСА
+       ======================================================== */
+    function render() {
+      taskCountEl.textContent = `${state.tasks.length} ${state.tasks.length === 1 ? 'задача' : 'задач'}`;
+      toggleModeBtn.textContent = state.rawMode 
+        ? "Режим: Сырые материалы (Брёвна/Слитки)" 
+        : "Режим: Прямой рецепт (Доски/Палки)";
+
+      if (state.tasks.length === 0) {
+        taskList.innerHTML = '<div class="empty-state">Список пуст. Выберите или найдите предмет в поиске выше.</div>';
+      } else {
+        taskList.innerHTML = state.tasks.map(t => {
+          const item = DB[t.id];
+          if (!item) return '';
+
+          const isExpanded = !!state.expandedTrees[t.id];
+          const rawPreview = getRecursiveRawMaterials(t.id, t.qty);
+          const rawSummaryText = Object.entries(rawPreview)
+            .map(([rId, count]) => `${DB[rId]?.name || rId}: ${count}`)
+            .join(' • ');
+
+          return `
+            <div class="task-card ${t.active ? '' : 'inactive'}">
+              <div class="task-content">
+                <div class="task-main">
+                  <div class="item-icon">${item.icon}</div>
+                  <div class="task-info">
+                    <h3>${item.name}</h3>
+                    <div class="task-recipe-preview">${rawSummaryText}</div>
+                    <button class="tree-toggle-btn" onclick="toggleTree('${t.id}')">
+                      🌲 ${isExpanded ? 'Скрыть дерево' : 'Дерево крафта'}
+                    </button>
+                  </div>
+                </div>
+
+                <div class="task-controls">
+                  <div class="qty-control">
+                    <button class="qty-btn" onclick="updateQty('${t.id}', -1)">−</button>
+                    <input type="number" class="qty-input" value="${t.qty}" min="1" onchange="setQty('${t.id}', this.value)">
+                    <button class="qty-btn" onclick="updateQty('${t.id}', 1)">+</button>
+                  </div>
+
+                  <label class="toggle-switch">
+                    <input type="checkbox" ${t.active ? 'checked' : ''} onchange="toggleTask('${t.id}')">
+                    <span class="slider"></span>
+                  </label>
+
+                  <button class="delete-btn" title="Удалить" onclick="deleteTask('${t.id}')">✕</button>
+                </div>
+              </div>
+
+              <div class="task-tree-view ${isExpanded ? 'expanded' : ''}">
+                <div style="font-weight:600; margin-bottom:6px; color:var(--text-muted); font-size:11px; text-transform:uppercase;">
+                  Иерархия крафта:
+                </div>
+                ${renderCraftTreeHTML(t.id, t.qty)}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const totals = {};
+      state.tasks.forEach(t => {
+        if (!t.active) return;
+        const matSet = state.rawMode 
+          ? getRecursiveRawMaterials(t.id, t.qty)
+          : getDirectMaterials(t.id, t.qty);
+
+        for (const [matId, amount] of Object.entries(matSet)) {
+          totals[matId] = (totals[matId] || 0) + amount;
+        }
+      });
+
+      const totalKeys = Object.keys(totals);
+      if (totalKeys.length === 0) {
+        summaryContainer.innerHTML = '<div class="empty-state">Нет активных задач для расчета. Включите тумблер на задаче.</div>';
+      } else {
+        summaryContainer.innerHTML = `
+          <div class="summary-grid">
+            ${totalKeys.map(matId => {
+              const matInfo = DB[matId] || { name: matId, icon: "📦" };
+              const amount = totals[matId];
+              return `
+                <div class="summary-card">
+                  <div class="item-icon">${matInfo.icon}</div>
+                  <div>
+                    <div class="mat-name">${matInfo.name}</div>
+                    <div class="mat-stacks">${formatStacks(amount)}</div>
+                    <div class="mat-raw">Всего: ${amount} шт.</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+    }
+
+    loadState();
+    render();
+  </script>
+</body>
+</html>
